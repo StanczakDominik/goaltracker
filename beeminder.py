@@ -1,10 +1,12 @@
+#!/usr/bin/env python
+"""A python implementation of Beeminder style goal tracking"""
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 import datetime
-
-goals = {"pushups", "meditation", "duolingo"}
+from config import goals
 class Goal:
     """Class representing a goal you want to pursue.
 
@@ -15,7 +17,6 @@ class Goal:
     period - per how many days
     """
     def __init__(self, shortname, description, count, period):
-        # TODO: readable format for period?
         self.shortname = shortname
         self.description = description
         self.count = count
@@ -57,7 +58,7 @@ class Goal:
         y_supposed = np.arange(x_plot.size) * self.count / self.period + self.count
 
         plt.plot(x_plot, y_supposed, "r-", label="How you should be doing!")
-        plt.vlines([datetime.datetime.today()], y_supposed.min(), y_supposed.max(), "k", "--", label="Right now!")
+        plt.vlines([datetime.datetime.today()], y_supposed.min(), max((y.max(), y_supposed.max())), "k", "--", label="Right now!")
         plt.legend(loc='best')
         plt.grid()
         plt.xlabel("")
@@ -66,11 +67,26 @@ class Goal:
     def save_df(self):
         """Saves the dataframe to .csv."""
         self.df.to_csv(self.shortname + ".csv")
+
 if __name__=="__main__":
-    g = Goal("pushups", "20 pushups first day in morning", 20, 1)
-    # print(g.df)
-    # for i in range(10):
-    #     g.progress(i)
-    # # g.df.set_value(0,'datetime', datetime.datetime(2017,1,1))
-    # # g.save_df()
-    g.plot_cumsum()
+    goal_dict = {}
+    # load from config
+    for goal_name, goal_data in goals.items():
+        goal_dict[goal_name] = Goal(*goal_data)
+
+    # plot current status
+    for goal_name, g in goal_dict.items():
+        if g.df.size > 0:
+            g.plot_cumsum()
+
+    all_names = ""
+    for goal_name in goal_dict.keys():
+        all_names = all_names + goal_name + ", "
+    all_names = all_names.rstrip(", ")
+    while True:
+        name = "boo"
+        while name not in goal_dict.keys():
+            name = input("Input goal name. Choose from: {}.".format(all_names))
+        value = input("Input value for {} update".format(name))
+        goal_dict[name].progress(value)
+        goal_dict[name].plot_cumsum()
