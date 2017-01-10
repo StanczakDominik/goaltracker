@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import datetime
 
 goals = {"pushups", "meditation", "duolingo"}
 class Goal:
@@ -26,18 +27,18 @@ class Goal:
             return df
 
     def append_df(self, value):
-        current_datetime = 1
-        row = pd.DataFrame([current_datetime, value], columns=self.df.columns)
-        self.df.append(row)
+        current_datetime = datetime.datetime.today()
+        self.df.loc[len(self.df)] = [current_datetime, value]
 
 
     def plot_cumsum(self):
-        y = self.df.cumsum('count')
+        y = self.df['count'].cumsum()
         x = self.df['datetime']
         plt.plot(x,y)
         plt.show()
 if __name__=="__main__":
     g = Goal("pushups", "20 pushups first day in morning", 20, "1 day")
-    g.append_df(4)
-    print(g, g.shortname, g.description, g.count, g.period, g.df)
-
+    for i in range(10):
+        g.append_df(i)
+    print(g.df)
+    g.plot_cumsum()
