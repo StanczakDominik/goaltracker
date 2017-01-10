@@ -49,7 +49,6 @@ class Goal:
 
         y = self.df['count'].cumsum()
         x = self.df['datetime']
-        plt.plot(x,y, "bo--", label="Your progress!")
 
         first_day = self.df['datetime'][0].to_pydatetime()
 
@@ -57,11 +56,18 @@ class Goal:
         x_plot = pd.date_range(start=first_day, end=datetime.datetime.today()+datetime.timedelta(1), freq=str(self.period)+'D')
         y_supposed = np.arange(x_plot.size) * self.count / self.period + self.count
 
-        plt.plot(x_plot, y_supposed, "r-", label="How you should be doing!")
-        plt.vlines([datetime.datetime.today()], y_supposed.min(), max((y.max(), y_supposed.max())), "k", "--", label="Right now!")
-        plt.legend(loc='best')
-        plt.grid()
-        plt.xlabel("")
+        fig, ax = plt.subplots()
+        ax.set_title(self.shortname.upper())
+        ax.plot(x,y, "bo--", label="Your progress!")
+        ax.plot(x_plot, y_supposed, "r-", label="How you should be doing!")
+        ax.vlines([datetime.datetime.today()],
+                y_supposed.min(),
+                max((y.max(), y_supposed.max())),
+                "k", "--", label="Right now!")
+        ax.legend(loc='best')
+        ax.grid()
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Progress")
         plt.show()
 
     def save_df(self):
