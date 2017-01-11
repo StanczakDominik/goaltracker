@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import os
 import datetime
 from config import goals
+
 class Goal:
     """Class representing a goal you want to pursue.
 
