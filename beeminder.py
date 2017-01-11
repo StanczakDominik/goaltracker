@@ -57,7 +57,11 @@ class Goal:
         all_days = (datetime.datetime.today()-first_day).days
         x_plot = pd.date_range(start=first_day, end=datetime.datetime.today()+datetime.timedelta(1), freq=str(self.period)+'D')
         days_for_calc = np.arange(x_plot.size)
-        y_supposed = days_for_calc * self.count / self.period + self.count
+        y_supposed = self.count
+        for index, factor in enumerate(self.factors): #TODO: do this via broadcasting
+            power = index + 1 # we're starting from 0
+            y_supposed += days_for_calc**power * factor / self.period
+
 
         fig, ax = plt.subplots()
         ax.set_title(self.shortname.upper())
