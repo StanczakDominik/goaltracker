@@ -10,17 +10,19 @@ from config import goals
 class Goal:
     """Class representing a goal you want to pursue.
 
-    Goal("pushups", "20 pushups first day in morning", 20, 1)
+    Goal("pushups", "20 pushups first thing in morning", 1, 20, 1)
     shortname - short, no spaces, name for goal
     description - more verbose description
-    count - how many you want to do...
-    period - per how many days
+    period - per how many days...
+    count - how many you want to do
+    additional - factors for additional terms in polynomial
     """
-    def __init__(self, shortname, description, count, period):
+    def __init__(self, shortname, description, period, *additional):
         self.shortname = shortname
         self.description = description
-        self.count = count
         self.period = period
+        self.count = additional[0]
+        self.factors = np.array(additional)
         self.df = self.load_df()
 
     def load_df(self):
@@ -41,7 +43,7 @@ class Goal:
         """Appends occurence of goal with current time to the dataframe's end."""
         current_datetime = datetime.datetime.today()
         self.df.loc[len(self.df)] = [current_datetime, value]
-        g.save_df()
+        self.save_df()
 
     def plot_cumsum(self):
         """Plots a neat comparison of your progress, compared to what you wanted
@@ -54,7 +56,8 @@ class Goal:
 
         all_days = (datetime.datetime.today()-first_day).days
         x_plot = pd.date_range(start=first_day, end=datetime.datetime.today()+datetime.timedelta(1), freq=str(self.period)+'D')
-        y_supposed = np.arange(x_plot.size) * self.count / self.period + self.count
+        days_for_calc = np.arange(x_plot.size)
+        y_supposed = days_for_calc * self.count / self.period + self.count
 
         fig, ax = plt.subplots()
         ax.set_title(self.shortname.upper())
@@ -72,7 +75,7 @@ class Goal:
 
     def save_df(self):
         """Saves the dataframe to .csv."""
-        self.df.to_csv(self.shortname + ".csv")
+        print(self.df.to_csv(self.shortname + ".csv"))
 
 if __name__=="__main__":
     goal_dict = {}
@@ -93,6 +96,8 @@ if __name__=="__main__":
         name = "boo"
         while name not in goal_dict.keys():
             name = input("Input goal name. Choose from: {}.".format(all_names))
+            if name == "exit":
+                exit()
         value = input("Input value for {} update".format(name))
-        goal_dict[name].progress(value)
+        goal_dict[name].progress(float(value))
         goal_dict[name].plot_cumsum()
