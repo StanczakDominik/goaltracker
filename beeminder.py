@@ -6,7 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import datetime
+import textwrap
 from config import goals
+
 
 class Goal:
     """Class representing a goal you want to pursue.
@@ -47,6 +49,26 @@ class Goal:
         self.df.loc[len(self.df)] = [current_datetime, value]
         self.save_df()
 
+
+    def days_for_calculation(self, only_today=False):
+
+        first_day = self.df['datetime'][0].to_pydatetime()
+        all_days = (datetime.datetime.today()-first_day).days
+        x_plot = pd.date_range(start=first_day, end=datetime.datetime.today()+datetime.timedelta(1), freq=str(self.period)+'D')
+
+
+        if only_today:
+            return np.arange(x_plot.size)[-1]
+        else:
+            return x_plot
+
+    def calculate_supposed_progress(self, days_for_calc):
+        y_supposed = self.count
+        for index, factor in enumerate(self.factors): #TODO: do this via broadcasting
+            power = index + 1 # we're starting from 0
+            y_supposed += days_for_calc**power * factor / self.period
+        return y_supposed
+
     def plot_cumsum(self):
         """Plots a neat comparison of your progress, compared to what you wanted
         to accomplish in that area."""
@@ -54,15 +76,8 @@ class Goal:
         y = self.df['count'].cumsum()
         x = self.df['datetime']
 
-        first_day = self.df['datetime'][0].to_pydatetime()
-
-        all_days = (datetime.datetime.today()-first_day).days
-        x_plot = pd.date_range(start=first_day, end=datetime.datetime.today()+datetime.timedelta(1), freq=str(self.period)+'D')
-        days_for_calc = np.arange(x_plot.size)
-        y_supposed = self.count
-        for index, factor in enumerate(self.factors): #TODO: do this via broadcasting
-            power = index + 1 # we're starting from 0
-            y_supposed += days_for_calc**power * factor / self.period
+        x_plot = self.days_for_calculation()
+        y_supposed = self.calculate_supposed_progress(np.arange(x_plot.size))
 
 
         fig, ax = plt.subplots()
@@ -80,6 +95,25 @@ class Goal:
         ax.set_ylabel("Progress")
         plt.show()
 
+    def review_progress(self):
+        current_progress = self.df['count'].sum()
+        supposed_progress = self.calculate_supposed_progress(self.days_for_calculation(True))
+        progress_diff = -supposed_progress + current_progress
+        days_to_equalize = 0 #TODO: solve polynomial equation to get number of days
+
+        if progress_diff >0:
+            print(textwrap.dedent(f"""Awesome! You're {progress_diff} units ahead in {self.shortname}.
+                    You can, if need be, slack off safely for {days_to_equalize}.
+                    Or we could kick it up a notch...""")) #TODO: difficulty increase option
+        elif progress_diff == 0:
+            print("You're EXACTLY on track in {self.name}. W00t.")
+        else: # progress_diff < 0:
+            print(textwrap.dedent(f"""
+                You're {progress_diff} units behind in {self.shortname}.
+                You would need to do {-progress_diff} units to catch up right now,
+                which is equivalent to {days_to_equalize} days' work.
+                Get to it."""))
+
     def save_df(self):
         """Saves the dataframe to .csv."""
         print(self.df.to_csv(self.shortname + ".csv"))
@@ -94,7 +128,7 @@ if __name__=="__main__":
     for goal_name, g in goal_dict.items():
         if g.df.size > 0:
             g.plot_cumsum()
-
+            g.review_progress()
     all_names = ""
     for goal_name in goal_dict.keys():
         all_names = all_names + goal_name + ", "
@@ -102,9 +136,11 @@ if __name__=="__main__":
     while True:
         name = "boo"
         while name not in goal_dict.keys():
-            name = input("Input goal name. Choose from: {}.".format(all_names))
+            #input numbers to update last
+            name = input(f"Input goal name. Choose from: {all_names}. Input number to update previous: {name}. (NOT YET IMPLEMENTED)")
+            #TODO: input number to update previous
             if name == "exit":
                 exit()
-        value = input("Input value for {} update".format(name))
+        value = input(f"Input value for {name} update.")
         goal_dict[name].progress(float(value))
         goal_dict[name].plot_cumsum()
