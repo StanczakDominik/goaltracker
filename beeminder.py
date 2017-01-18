@@ -101,6 +101,12 @@ class Goal:
         progress_diff = -supposed_progress + current_progress
         days_to_equalize = 0 #TODO: solve polynomial equation to get number of days
 
+        if self.factors.size == 2:
+            b = self.factors[0]/self.period
+            a = self.factors[1]/self.period**2
+            c = progress_diff
+            days_to_equalize = int(round((-b + np.sqrt(b**2 - 4*a*c))/2/a))
+
         if progress_diff >0:
             print(textwrap.dedent(f"""Awesome! You're {progress_diff} units ahead in {self.shortname}.
                     You can, if need be, slack off safely for {days_to_equalize}.
@@ -109,7 +115,7 @@ class Goal:
             print("You're EXACTLY on track in {self.name}. W00t.")
         else: # progress_diff < 0:
             print(textwrap.dedent(f"""
-                You're {progress_diff} units behind in {self.shortname}.
+                You're {-progress_diff} units behind in {self.shortname}.
                 You would need to do {-progress_diff} units to catch up right now,
                 which is equivalent to {days_to_equalize} days' work.
                 Get to it."""))
@@ -127,8 +133,8 @@ if __name__=="__main__":
     # plot current status
     for goal_name, g in goal_dict.items():
         if g.df.size > 0:
-            g.plot_cumsum()
             g.review_progress()
+            g.plot_cumsum()
     all_names = ""
     for goal_name in goal_dict.keys():
         all_names = all_names + goal_name + ", "
@@ -144,3 +150,4 @@ if __name__=="__main__":
         value = input(f"Input value for {name} update.")
         goal_dict[name].progress(float(value))
         goal_dict[name].plot_cumsum()
+        goal_dict[name].review_progress()
