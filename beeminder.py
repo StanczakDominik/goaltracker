@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 """A python implementation of Beeminder style goal tracking"""
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import os
 import datetime
+import os
 import textwrap
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 from config import goals
 
 
@@ -20,6 +22,7 @@ class Goal:
     count - how many you want to do
     additional - factors for additional terms in polynomial
     """
+
     def __init__(self, shortname, description, period, *additional):
         self.shortname = shortname
         self.description = description
@@ -40,22 +43,20 @@ class Goal:
             return loaded
         else:
             print("Starting a-fresh in {}!".format(filename))
-            df = pd.DataFrame(columns=['datetime','count'], )
+            df = pd.DataFrame(columns=['datetime', 'count'], )
             return df
 
-    def progress(self, value):
+    def progress(self, added_value):
         """Appends occurence of goal with current time to the dataframe's end."""
         current_datetime = datetime.datetime.today()
-        self.df.loc[len(self.df)] = [current_datetime, value]
+        self.df.loc[len(self.df)] = [current_datetime, added_value]
         self.save_df()
-
 
     def days_for_calculation(self, only_today=False):
 
         first_day = self.df['datetime'][0].to_pydatetime()
-        all_days = (datetime.datetime.today()-first_day).days
-        x_plot = pd.date_range(start=first_day, end=datetime.datetime.today()+datetime.timedelta(1), freq=str(self.period)+'D')
-
+        x_plot = pd.date_range(start=first_day, end=datetime.datetime.today() + datetime.timedelta(1),
+                               freq=str(self.period) + 'D')
 
         if only_today:
             return np.arange(x_plot.size)[-1]
@@ -64,9 +65,9 @@ class Goal:
 
     def calculate_supposed_progress(self, days_for_calc):
         y_supposed = self.count
-        for index, factor in enumerate(self.factors): #TODO: do this via broadcasting
-            power = index + 1 # we're starting from 0
-            y_supposed += days_for_calc**power * factor / self.period
+        for index, factor in enumerate(self.factors):  # TODO: do this via broadcasting
+            power = index + 1  # we're starting from 0
+            y_supposed += days_for_calc ** power * factor / self.period
         return y_supposed
 
     def plot_cumsum(self):
@@ -79,16 +80,15 @@ class Goal:
         x_plot = self.days_for_calculation()
         y_supposed = self.calculate_supposed_progress(np.arange(x_plot.size))
 
-
         fig, ax = plt.subplots()
         ax.set_title(self.shortname.upper())
-        ax.plot(x,y, "bo--", label="Your progress!")
+        ax.plot(x, y, "bo--", label="Your progress!")
         ax.plot(x_plot, y_supposed, "r-", label="How you should be doing!")
         ax.fill_between(x_plot, y_supposed - self.leeway, y_supposed + self.leeway, color="yellow", alpha=0.5)
         ax.vlines([datetime.datetime.today()],
-                y_supposed.min(),
-                max((y.max(), y_supposed.max())),
-                "k", "--", label="Right now!")
+                  y_supposed.min(),
+                  max((y.max(), y_supposed.max())),
+                  "k", "--", label="Right now!")
         ax.legend(loc='best')
         ax.grid()
         ax.set_xlabel("Time")
@@ -99,21 +99,21 @@ class Goal:
         current_progress = self.df['count'].sum()
         supposed_progress = self.calculate_supposed_progress(self.days_for_calculation(True))
         progress_diff = -supposed_progress + current_progress
-        days_to_equalize = 0 #TODO: solve polynomial equation to get number of days
+        days_to_equalize = 0  # TODO: solve polynomial equation to get number of days
 
         if self.factors.size == 2:
-            b = self.factors[0]/self.period
-            a = self.factors[1]/self.period**2
+            b = self.factors[0] / self.period
+            a = self.factors[1] / self.period ** 2
             c = progress_diff
-            days_to_equalize = int(round((-b + np.sqrt(b**2 - 4*a*c))/2/a))
+            days_to_equalize = int(round((-b + np.sqrt(b ** 2 - 4 * a * c)) / 2 / a))
 
-        if progress_diff >0:
+        if progress_diff > 0:
             print(textwrap.dedent(f"""Awesome! You're {progress_diff} units ahead in {self.shortname}.
                     You can, if need be, slack off safely for {days_to_equalize}.
-                    Or we could kick it up a notch...""")) #TODO: difficulty increase option
+                    Or we could kick it up a notch..."""))  # TODO: difficulty increase option
         elif progress_diff == 0:
             print("You're EXACTLY on track in {self.name}. W00t.")
-        else: # progress_diff < 0:
+        else:  # progress_diff < 0:
             print(textwrap.dedent(f"""
                 You're {-progress_diff} units behind in {self.shortname}.
                 You would need to do {-progress_diff} units to catch up right now,
@@ -124,7 +124,8 @@ class Goal:
         """Saves the dataframe to .csv."""
         print(self.df.to_csv(self.shortname + ".csv"))
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     goal_dict = {}
     # load from config
     for goal_name, goal_data in goals.items():
@@ -142,9 +143,10 @@ if __name__=="__main__":
     while True:
         name = "boo"
         while name not in goal_dict.keys():
-            #input numbers to update last
-            name = input(f"Input goal name. Choose from: {all_names}. Input number to update previous: {name}. (NOT YET IMPLEMENTED)")
-            #TODO: input number to update previous
+            # input numbers to update last
+            name = input(
+                f"Input goal name. Choose from: {all_names}. Input number to update previous: {name}. (NOT YET IMPLEMENTED)")
+            # TODO: input number to update previous
             if name == "exit":
                 exit()
         value = input(f"Input value for {name} update.")
