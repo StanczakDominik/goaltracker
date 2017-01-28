@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from config import goals
+from config import goals, conf_path
 
 
 class Goal:
@@ -30,19 +30,20 @@ class Goal:
         self.count = additional[0]
         self.leeway = 3 * self.count / period
         self.factors = np.array(additional)
+        self.filepath = conf_path + self.shortname + ".csv"
+        # TODO: make sure file path exists
         self.df = self.load_df()
 
     def load_df(self):
         """Loads goal dataframe from csv file.
         If it doesn't exist, creates a new dataframe."""
 
-        filename = self.shortname + ".csv"
-        if os.path.isfile(filename):
-            print("Found {}!".format(filename))
-            loaded = pd.read_csv(filename, parse_dates=['datetime'], index_col=0)
+        if os.path.isfile(self.filepath):
+            print("Found {}!".format(self.filepath))
+            loaded = pd.read_csv(self.filepath, parse_dates=['datetime'], index_col=0)
             return loaded
         else:
-            print("Starting a-fresh in {}!".format(filename))
+            print("Starting a-fresh in {}!".format(self.filepath))
             df = pd.DataFrame(columns=['datetime', 'count'], )
             return df
 
@@ -122,7 +123,7 @@ class Goal:
 
     def save_df(self):
         """Saves the dataframe to .csv."""
-        print(self.df.to_csv(self.shortname + ".csv"))
+        print(self.df.to_csv(self.filepath))
 
 
 if __name__ == "__main__":
@@ -141,6 +142,7 @@ if __name__ == "__main__":
         all_names = all_names + goal_name + ", "
     all_names = all_names.rstrip(", ")
     while True:
+        # TODO: streamline this process
         name = "boo"
         while name not in goal_dict.keys():
             # input numbers to update last
