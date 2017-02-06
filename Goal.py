@@ -115,7 +115,7 @@ class Goal:
         else:  # progress_diff < 0:
             print(textwrap.dedent(f"""
                 You're {-progress_diff} units behind in {self.shortname}.
-                You would need to do {-progress_diff} units to catch up right now,
+                You would need to do {-progress_diff:.1f} units to catch up right now,
                 which is equivalent to {days_to_equalize} days' work.
                 Get to it."""))
 
