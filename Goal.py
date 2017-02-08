@@ -9,6 +9,12 @@ from matplotlib import pyplot as plt
 from config import conf_path
 
 
+def polynomial_coefficients(period, additional):
+    polynomial_derivatives = np.array([0] + list(additional))
+    polynomial_denominators = np.arange(polynomial_derivatives.size)
+    polynomial_denominators[0] = 1
+    return polynomial_derivatives / (polynomial_denominators * period ** polynomial_denominators)
+
 class Goal:
     """Class representing a goal you want to pursue.
 
@@ -20,16 +26,33 @@ class Goal:
     additional - factors for additional terms in polynomial
     """
 
-    def __init__(self, shortname, description, period, *additional):
+    def __init__(self, shortname, description, period, *derivatives):
+        """
+
+        :param str shortname: unique ID name
+        :param str description: A longer description of the goal.
+        :param period: how often do you want to do this?
+        :param derivatives: how many units you want to add to each derivative each period.
+            20, 1: start with 20 units periodically, increase by 1 each period.
+            20, 1, 1: start with 20 units periodically, increase by 1+which_period each period.
+        """
         self.shortname = shortname
         self.description = description
         self.period = period
-        self.count = additional[0]
-        self.leeway = 3 * self.count / period
-        self.factors = np.array(additional)
+        self.count = derivatives[0]
+        self.leeway = 3 * self.count / self.period
+        self.polynomial_coefficients = polynomial_coefficients(self.period, derivatives)
+        self.polynomial_derivatives = np.polynomial.polynomial.polyder(self.polynomial_coefficients)
+        self.factors = np.array(derivatives)
         self.filepath = conf_path + self.shortname + ".csv"
         # TODO: make sure file path exists
         self.df = self.load_df()
+
+    def poly_values(self, d):
+        return np.polynomial.polynomial.polyval(d, self.polynomial_coefficients)
+
+    def poly_diffs(self, d):
+        return np.polynomial.polynomial.polyval(d, self.polynomial_derivatives)
 
     def load_df(self):
         """Loads goal dataframe from csv file.
