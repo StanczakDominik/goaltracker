@@ -84,6 +84,10 @@ class Goal:
         ax.plot(x, y, "bo--", label="Your progress!")
         ax.plot(x_plot, y_supposed, "r-", label="How you should be doing!")
         ax.fill_between(x_plot, y_supposed - self.leeway, y_supposed + self.leeway, color="yellow", alpha=0.5)
+        for sign in [-1, +1]:
+            for value, color in [(1, "orange"), (2, "red")]:
+                ax.fill_between(x_plot, y_supposed + sign * (value + 1) * self.leeway,
+                                y_supposed + value * sign * self.leeway, color=color, alpha=0.3)
         ax.vlines([datetime.datetime.today()],
                   y_supposed.min(),
                   max((y.max(), y_supposed.max())),
