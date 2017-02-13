@@ -88,6 +88,7 @@ class Goal:
                   y_supposed.min(),
                   max((y.max(), y_supposed.max())),
                   "k", "--", label="Right now!")
+        ax.hlines(y.iloc[-1], x.iloc[-1], datetime.datetime.today(), 'k', '--')
         ax.legend(loc='best')
         ax.grid()
         ax.set_xlabel("Time")
