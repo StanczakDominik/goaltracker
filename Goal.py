@@ -26,7 +26,11 @@ class Goal:
     additional - factors for additional terms in polynomial
     """
 
-    def __init__(self, shortname, description, period, *derivatives):
+    current_date = datetime.datetime.today()
+    tomorrow_date = current_date + datetime.timedelta(days=1)
+    tomorrow_plotting_date = tomorrow_date + datetime.timedelta(days=1)
+
+    def __init__(self, shortname, description, startdate, period, *derivatives):
         """
 
         :param str shortname: unique ID name
@@ -38,6 +42,7 @@ class Goal:
         """
         self.shortname = shortname
         self.description = description
+        self.startdate = datetime.datetime.strptime(startdate, "%Y-%m-%d")
         self.period = period
         self.count = derivatives[0]
         self.leeway = 3 * self.count / self.period
@@ -75,8 +80,8 @@ class Goal:
 
     def days_for_calculation(self, only_today=False):
 
-        first_day = self.df['datetime'][0].to_pydatetime()
-        x_plot = pd.date_range(start=first_day, end=datetime.datetime.today() + datetime.timedelta(1),
+        first_day = self.startdate
+        x_plot = pd.date_range(start=first_day, end=Goal.tomorrow_plotting_date,
                                freq=str(self.period) + 'D')
 
         if only_today:
@@ -91,7 +96,7 @@ class Goal:
             y_supposed += days_for_calc ** power * factor / self.period
         return y_supposed
 
-    def plot_cumsum(self):
+    def plot_cumsum(self, show=True):
         """Plots a neat comparison of your progress, compared to what you wanted
         to accomplish in that area."""
 
@@ -107,15 +112,22 @@ class Goal:
         ax.plot(x, y, "bo--", label="Your progress!")
         ax.plot(x_plot, y_supposed, "r-", label="How you should be doing!")
         ax.fill_between(x_plot, y_supposed - self.leeway, y_supposed + self.leeway, color="yellow", alpha=0.5)
+        for sign in [-1, +1]:
+            for value, color in [(1, "orange"), (2, "red")]:
+                ax.fill_between(x_plot, y_supposed + sign * (value + 1) * self.leeway,
+                                y_supposed + value * sign * self.leeway, color=color, alpha=0.3)
         ax.vlines([datetime.datetime.today()],
                   y_supposed.min(),
                   max((y.max(), y_supposed.max())),
                   "k", "--", label="Right now!")
+        ax.hlines(y.iloc[-1], x.iloc[-1], datetime.datetime.today(), 'k', '--')
         ax.legend(loc='best')
         ax.grid()
         ax.set_xlabel("Time")
         ax.set_ylabel("Progress")
-        plt.show()
+        ax.set_xlim(self.startdate, Goal.tomorrow_date)
+        if show:
+            plt.show()
 
     def review_progress(self):
         current_progress = self.df['count'].sum()
@@ -130,14 +142,14 @@ class Goal:
             days_to_equalize = int(round((-b + np.sqrt(b ** 2 - 4 * a * c)) / 2 / a))
 
         if progress_diff > 0:
-            print(textwrap.dedent(f"""Awesome! You're {progress_diff} units ahead in {self.shortname}.
+            print(textwrap.dedent(f"""Awesome! You're {progress_diff:.1f} units ahead in {self.shortname}.
                     You can, if need be, slack off safely for {days_to_equalize}.
                     Or we could kick it up a notch..."""))  # TODO: difficulty increase option
         elif progress_diff == 0:
             print("You're EXACTLY on track in {self.name}. W00t.")
         else:  # progress_diff < 0:
             print(textwrap.dedent(f"""
-                You're {-progress_diff} units behind in {self.shortname}.
+                You're {-progress_diff:.1f} units behind in {self.shortname}.
                 You would need to do {-progress_diff:.1f} units to catch up right now,
                 which is equivalent to {days_to_equalize} days' work.
                 Get to it."""))

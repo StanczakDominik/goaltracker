@@ -3,16 +3,27 @@
 
 import argparse
 
+import matplotlib.pyplot as plt
+
 from Goal import Goal
 from config import goals
+
+
+def update_goal(goal_name, goal_update_value=1):
+    print(f"Added {goal_update_value} to {goal_name}!")
+    goal_dict[goal_name].progress(float(goal_update_value))
+    goal_dict[goal_name].review_progress()
+    if args.show:
+        goal_dict[goal_name].plot_cumsum()
 
 if __name__ == "__main__":
     goal_dict = {}
     # load from config
     all_names = ""
-    for goal_name, goal_data in goals.items():
-        goal_dict[goal_name] = Goal(*goal_data)
-        all_names = all_names + goal_name + ", "
+    for goal in goals:
+        goal_dict[goal.shortname] = Goal(goal.shortname, goal.description, goal.startdate, goal.period,
+                                         *goal.derivatives)
+        all_names = all_names + goal.shortname + ", "
     all_names = all_names.rstrip(", ")
 
     parser = argparse.ArgumentParser(
@@ -20,19 +31,22 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--show", help="Progress review mode", action="store_true")
     parser.add_argument("-u", "--update", nargs=2, metavar=('name', 'value'), action='append',
                         help='Update an existing goal')
+    parser.add_argument("-c", "--checkoff", nargs=1, metavar=('name',), action='append',
+                        help='Update an existing goal by 1.')
     args = parser.parse_args()
 
     if args.update:  # command line update mode
         for goal_name, goal_update_value in args.update:
-            print(f"Added {goal_update_value} to {goal_name}!")
-            goal_dict[goal_name].progress(float(goal_update_value))
-            goal_dict[goal_name].review_progress()
-            if args.show:
-                goal_dict[goal_name].plot_cumsum()
+            update_goal(goal_name, goal_update_value)
+    if args.checkoff:
+        for goal_name in args.checkoff:
+            update_goal(*goal_name)
     elif args.show:  # progress display mode
         for goal in goal_dict.values():
-            goal.review_progress()
-            goal.plot_cumsum()
+            if len(goal.df) > 0:
+                goal.review_progress()
+                goal.plot_cumsum(show=False)
+        plt.show()
 
     else:  # interactive mode
         for g in goal_dict.values():
