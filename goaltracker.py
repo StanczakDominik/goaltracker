@@ -20,9 +20,9 @@ if __name__ == "__main__":
     goal_dict = {}
     # load from config
     all_names = ""
-    for goal_name, goal_data in goals.items():
-        goal_dict[goal_name] = Goal(*goal_data)
-        all_names = all_names + goal_name + ", "
+    for goal in goals:
+        goal_dict[goal.shortname] = Goal(goal.shortname, goal.description, goal.period, *goal.derivatives)
+        all_names = all_names + goal.shortname + ", "
     all_names = all_names.rstrip(", ")
 
     parser = argparse.ArgumentParser(
