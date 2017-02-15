@@ -20,9 +20,14 @@ class Goal:
     additional - factors for additional terms in polynomial
     """
 
-    def __init__(self, shortname, description, period, *additional):
+    current_date = datetime.datetime.today()
+    tomorrow_date = current_date + datetime.timedelta(days=1)
+    tomorrow_plotting_date = tomorrow_date + datetime.timedelta(days=1)
+
+    def __init__(self, shortname, description, startdate, period, *additional):
         self.shortname = shortname
         self.description = description
+        self.startdate = datetime.datetime.strptime(startdate, "%Y-%m-%d")
         self.period = period
         self.count = additional[0]
         self.leeway = 3 * self.count / period
@@ -52,8 +57,8 @@ class Goal:
 
     def days_for_calculation(self, only_today=False):
 
-        first_day = self.df['datetime'][0].to_pydatetime()
-        x_plot = pd.date_range(start=first_day, end=datetime.datetime.today() + datetime.timedelta(1),
+        first_day = self.startdate
+        x_plot = pd.date_range(start=first_day, end=Goal.tomorrow_plotting_date,
                                freq=str(self.period) + 'D')
 
         if only_today:
@@ -97,6 +102,7 @@ class Goal:
         ax.grid()
         ax.set_xlabel("Time")
         ax.set_ylabel("Progress")
+        ax.set_xlim(self.startdate, Goal.tomorrow_date)
         if show:
             plt.show()
 

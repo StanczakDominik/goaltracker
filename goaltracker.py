@@ -21,7 +21,8 @@ if __name__ == "__main__":
     # load from config
     all_names = ""
     for goal in goals:
-        goal_dict[goal.shortname] = Goal(goal.shortname, goal.description, goal.period, *goal.derivatives)
+        goal_dict[goal.shortname] = Goal(goal.shortname, goal.description, goal.startdate, goal.period,
+                                         *goal.derivatives)
         all_names = all_names + goal.shortname + ", "
     all_names = all_names.rstrip(", ")
 
