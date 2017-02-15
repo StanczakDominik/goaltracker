@@ -73,16 +73,17 @@ class Goal:
         self.df.loc[len(self.df)] = [current_datetime, added_value]
         self.save_df()
 
-    def days_for_calculation(self, only_today=False):
+    def today_for_calculation(self):
+        x_plot = pd.date_range(start=self.startdate, end=Goal.tomorrow_date,
+                               freq=str(self.period) + 'D')
+        return np.arange(x_plot.size)[-1] #TODO: this is absolutely terrible
 
-        first_day = self.startdate
-        x_plot = pd.date_range(start=first_day, end=Goal.tomorrow_plotting_date,
+    def days_for_calculation(self):
+
+        x_plot = pd.date_range(start=self.startdate, end=Goal.tomorrow_plotting_date,
                                freq=str(self.period) + 'D')
 
-        if only_today:
-            return np.arange(x_plot.size)[-1]
-        else:
-            return x_plot
+        return x_plot
 
     def calculate_supposed_progress(self, days_for_calc):
         y_supposed = self.polynomial(days_for_calc)
@@ -123,13 +124,15 @@ class Goal:
 
     def review_progress(self):
         current_progress = self.df['count'].sum()
-        supposed_progress = self.calculate_supposed_progress(self.days_for_calculation(True))
+        supposed_progress = self.calculate_supposed_progress(self.today_for_calculation())
         progress_diff = current_progress - supposed_progress
-        periods_to_equalize = ((self.polynomial - current_progress).r - self.days_for_calculation(True)).max()
+        periods_to_equalize = ((self.polynomial - current_progress).r - self.today_for_calculation()).max()
 
         # cur_day = self.days_for_calculation(True)
         # prog_rate = self.polynomial.deriv()(cur_day)
         # print(f"Current rate of progress is {prog_rate} units per {self.period} days.")
+
+        #TODO: move prints to goaltracker
         if progress_diff > 0:
             print(textwrap.dedent(f"""Awesome! You're {progress_diff:.1f} units ahead in {self.shortname}.
                     You can, if need be, slack off safely for {np.floor(periods_to_equalize*self.period).astype(int)} days.

@@ -34,6 +34,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Track goal status and progress. Run without arguments for interactive mode.')
     parser.add_argument("-s", "--show", help="Progress review mode", action="store_true")
+    parser.add_argument("-r", "--review", help="Text review mode", action="store_true")
     parser.add_argument("-u", "--update", nargs=2, metavar=('name', 'value'), action='append',
                         help='Update an existing goal')
     parser.add_argument("-c", "--checkoff", nargs=1, metavar=('name',), action='append',
@@ -43,9 +44,12 @@ if __name__ == "__main__":
     if args.update:  # command line update mode
         for goal_name, goal_update_value in args.update:
             update_goal(goal_name, goal_update_value)
-    if args.checkoff:
+    elif args.checkoff:
         for goal_name in args.checkoff:
             update_goal(*goal_name)
+    elif args.review:
+        for name, goal in goal_dict.items():
+            goal.review_progress()
     elif args.show:  # progress display mode
         for goal in goal_dict.values():
             if len(goal.df) > 0:
