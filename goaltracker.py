@@ -3,14 +3,15 @@
 
 import argparse
 
-from Goal import Goal
-from config import goals
-
-debug = False
+debug = True
 if debug:
     import matplotlib
 
     matplotlib.use('TkAgg')
+from Goal import Goal
+from config import goals
+
+
 import matplotlib.pyplot as plt
 
 def update_goal(goal_name, goal_update_value=1):

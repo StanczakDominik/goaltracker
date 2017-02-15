@@ -2,6 +2,7 @@ import datetime
 import os
 import textwrap
 
+import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -88,6 +89,19 @@ class Goal:
         y_supposed = self.polynomial(days_for_calc)
         return y_supposed
 
+    def fit_polynomial(self):
+        y = self.df['count'].cumsum().values
+        x = mdates.date2num(self.df['datetime'].astype(datetime.datetime))
+
+        x_fit = self.days_for_calculation()
+        print(x)
+        print(y)
+        coeffs = np.polyfit(x, y, deg=self.polynomial.order)
+        fit_poly = np.poly1d(coeffs, variable='t')
+        print(fit_poly.c, self.polynomial.c)
+
+
+
     def plot_cumsum(self, show=True):
         """Plots a neat comparison of your progress, compared to what you wanted
         to accomplish in that area."""
@@ -96,8 +110,9 @@ class Goal:
         x = self.df['datetime']
 
         x_plot = self.days_for_calculation()
-        # TODO: use np.polyval here!
         y_supposed = self.calculate_supposed_progress(np.arange(x_plot.size))
+
+        self.fit_polynomial()
 
         fig, ax = plt.subplots()
         ax.set_title(self.shortname.upper())
