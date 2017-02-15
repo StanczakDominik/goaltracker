@@ -15,6 +15,7 @@ def polynomial_coefficients(period, additional):
     polynomial_denominators[0] = 1
     return polynomial_derivatives / (polynomial_denominators * period ** polynomial_denominators)
 
+
 class Goal:
     """Class representing a goal you want to pursue.
 
@@ -47,17 +48,11 @@ class Goal:
         self.count = derivatives[0]
         self.leeway = 3 * self.count / self.period
         self.polynomial_coefficients = polynomial_coefficients(self.period, derivatives)
-        self.polynomial_derivatives = np.polynomial.polynomial.polyder(self.polynomial_coefficients)
+        self.polynomial = np.poly1d(self.polynomial_coefficients[::-1], variable="t")
         self.factors = np.array(derivatives)
         self.filepath = conf_path + self.shortname + ".csv"
         # TODO: make sure file path exists
         self.df = self.load_df()
-
-    def poly_values(self, d):
-        return np.polynomial.polynomial.polyval(d, self.polynomial_coefficients)
-
-    def poly_diffs(self, d):
-        return np.polynomial.polynomial.polyval(d, self.polynomial_derivatives)
 
     def load_df(self):
         """Loads goal dataframe from csv file.
@@ -90,10 +85,7 @@ class Goal:
             return x_plot
 
     def calculate_supposed_progress(self, days_for_calc):
-        y_supposed = self.count
-        for index, factor in enumerate(self.factors):  # TODO: do this via broadcasting
-            power = index + 1  # we're starting from 0
-            y_supposed += days_for_calc ** power * factor / self.period
+        y_supposed = self.polynomial(days_for_calc)
         return y_supposed
 
     def plot_cumsum(self, show=True):
@@ -132,26 +124,23 @@ class Goal:
     def review_progress(self):
         current_progress = self.df['count'].sum()
         supposed_progress = self.calculate_supposed_progress(self.days_for_calculation(True))
-        progress_diff = -supposed_progress + current_progress
-        days_to_equalize = 0  # TODO: solve polynomial equation to get number of days
+        progress_diff = current_progress - supposed_progress
+        periods_to_equalize = ((self.polynomial - current_progress).r - self.days_for_calculation(True)).max()
 
-        if self.factors.size == 2:
-            b = self.factors[0] / self.period
-            a = self.factors[1] / self.period ** 2
-            c = progress_diff
-            days_to_equalize = int(round((-b + np.sqrt(b ** 2 - 4 * a * c)) / 2 / a))
-
+        # cur_day = self.days_for_calculation(True)
+        # prog_rate = self.polynomial.deriv()(cur_day)
+        # print(f"Current rate of progress is {prog_rate} units per {self.period} days.")
         if progress_diff > 0:
             print(textwrap.dedent(f"""Awesome! You're {progress_diff:.1f} units ahead in {self.shortname}.
-                    You can, if need be, slack off safely for {days_to_equalize}.
+                    You can, if need be, slack off safely for {np.floor(periods_to_equalize*self.period).astype(int)} days.
                     Or we could kick it up a notch..."""))  # TODO: difficulty increase option
         elif progress_diff == 0:
-            print("You're EXACTLY on track in {self.name}. W00t.")
+            print(f"You're EXACTLY on track in {self.shortname}. W00t.")
         else:  # progress_diff < 0:
             print(textwrap.dedent(f"""
                 You're {-progress_diff:.1f} units behind in {self.shortname}.
                 You would need to do {-progress_diff:.1f} units to catch up right now,
-                which is equivalent to {days_to_equalize} days' work.
+                which is equivalent to {np.floor(-periods_to_equalize*self.period).astype(int)} days' work.
                 Get to it."""))
 
     def save_df(self):

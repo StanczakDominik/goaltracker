@@ -3,11 +3,15 @@
 
 import argparse
 
-import matplotlib.pyplot as plt
-
 from Goal import Goal
 from config import goals
 
+debug = False
+if debug:
+    import matplotlib
+
+    matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 
 def update_goal(goal_name, goal_update_value=1):
     print(f"Added {goal_update_value} to {goal_name}!")
@@ -15,6 +19,7 @@ def update_goal(goal_name, goal_update_value=1):
     goal_dict[goal_name].review_progress()
     if args.show:
         goal_dict[goal_name].plot_cumsum()
+
 
 if __name__ == "__main__":
     goal_dict = {}
