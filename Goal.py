@@ -1,3 +1,4 @@
+import collections
 import datetime
 import os
 import textwrap
@@ -8,6 +9,7 @@ from matplotlib import pyplot as plt
 
 from config import conf_path
 
+status_review_report = collections.namedtuple("status_review_report", ["is_ahead", "how_much_ahead", "days_safe"])
 
 def polynomial_coefficients(period, additional):
     polynomial_derivatives = np.array([0] + list(additional))
@@ -59,11 +61,11 @@ class Goal:
         If it doesn't exist, creates a new dataframe."""
 
         if os.path.isfile(self.filepath):
-            print("Found {}!".format(self.filepath))
+            # print("Found {}!".format(self.filepath))
             loaded = pd.read_csv(self.filepath, parse_dates=['datetime'], index_col=0)
             return loaded
         else:
-            print("Starting a-fresh in {}!".format(self.filepath))
+            print(f"Data for {self.shortname} not found. Starting a new dataframe.")
             df = pd.DataFrame(columns=['datetime', 'count'], )
             return df
 
@@ -85,10 +87,6 @@ class Goal:
 
         return x_plot
 
-    def calculate_supposed_progress(self, days_for_calc):
-        y_supposed = self.polynomial(days_for_calc)
-        return y_supposed
-
     def plot_cumsum(self, show=True):
         """Plots a neat comparison of your progress, compared to what you wanted
         to accomplish in that area."""
@@ -97,8 +95,7 @@ class Goal:
         x = self.df['datetime']
 
         x_plot = self.days_for_calculation()
-        # TODO: use np.polyval here!
-        y_supposed = self.calculate_supposed_progress(np.arange(x_plot.size))
+        y_supposed = self.polynomial(np.arange(x_plot.size))
 
         fig, ax = plt.subplots()
         ax.set_title(self.shortname.upper())
@@ -124,7 +121,7 @@ class Goal:
 
     def review_progress(self):
         current_progress = self.df['count'].sum()
-        supposed_progress = self.calculate_supposed_progress(self.today_for_calculation())
+        supposed_progress = self.polynomial(self.today_for_calculation())
         progress_diff = current_progress - supposed_progress
         periods_to_equalize = ((self.polynomial - current_progress).r - self.today_for_calculation()).max()
 
@@ -148,4 +145,4 @@ class Goal:
 
     def save_df(self):
         """Saves the dataframe to .csv."""
-        print(self.df.to_csv(self.filepath))
+        self.df.to_csv(self.filepath)
