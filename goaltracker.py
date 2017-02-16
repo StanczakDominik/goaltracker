@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description='Track goal status and progress. Run without arguments for interactive mode.')
-    parser.add_argument("-s", "--show", help="Progress review mode", action="store_true")
+    parser.add_argument("-s", "--show", nargs='?', const='go_all', type=str, help="Progress review mode")
     parser.add_argument("-r", "--review", help="Text review mode", action="store_true")
     parser.add_argument("-u", "--update", nargs=2, metavar=('name', 'value'), action='append',
                         help='Update an existing goal')
@@ -52,7 +52,7 @@ if __name__ == "__main__":
             goal.review_progress()
     elif args.show:  # progress display mode
         for goal in goal_dict.values():
-            if len(goal.df) > 0:
+            if (len(goal.df) > 0) and ((args.show == 'go_all') or (goal.shortname == args.show)):
                 goal.review_progress()
                 goal.plot_cumsum(show=False)
         plt.show()
