@@ -66,6 +66,7 @@ class Goal:
             return loaded
         else:
             print(f"Data for {self.shortname} not found. Starting a new dataframe.")
+            print(f"Location was {self.filepath}")
             df = pd.DataFrame(columns=['datetime', 'count'], )
             return df
 

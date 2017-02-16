@@ -1,7 +1,18 @@
+import os
 from collections import namedtuple
 
 goal_info = namedtuple("goal_info", ['shortname', 'description', 'startdate', 'period', 'derivatives'])
-conf_path = "/home/dominik/private_notes/goaltracker/"
 
-goals = [goal_info("pushups", "20 pushups first day in morning", "2017-01-09", 1, [20, 1 / 2]),
-         ]
+with open(os.path.dirname(os.path.realpath(__file__)) + "/config", "r") as f:
+    conf_path = f.readline().rstrip()
+    goals = []
+    for line in f.readlines():
+        shortname, description, start_date, period, *derivatives = line.split(";")
+        period = int(period)
+        derivatives = [float(d) for d in derivatives]
+        goal = goal_info(shortname, description, start_date, period, derivatives)
+        goals.append(goal)
+
+        # for g in goals:
+        #     print(g)
+        # print(conf_path)

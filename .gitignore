@@ -1,5 +1,5 @@
-config.py
 *.csv
 __pycache__
 *.swp
 .idea
+config
