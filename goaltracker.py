@@ -56,23 +56,3 @@ if __name__ == "__main__":
                 goal.review_progress()
                 goal.plot_cumsum(show=False)
         plt.show()
-
-    else:  # interactive mode
-        for g in goal_dict.values():
-            if g.df.size > 0:
-                g.review_progress()
-                g.plot_cumsum()
-        while True:
-            # TODO: streamline this process
-            name = "boo"
-            while name not in goal_dict.keys():
-                # input numbers to update last
-                name = input(
-                    f"Input goal name. Choose from: {all_names}. Input number to update previous: {name}. (NOT YET IMPLEMENTED)")
-                # TODO: input number to update previous
-                if name == "exit":
-                    exit()
-            value = input(f"Input value for {name} update.")
-            goal_dict[name].progress(float(value))
-            goal_dict[name].plot_cumsum()
-            goal_dict[name].review_progress()
