@@ -55,6 +55,11 @@ class Goal:
         self.filepath = conf_path + self.shortname + ".csv"
         # TODO: make sure file path exists
         self.df = self.load_df()
+        self.today_for_calculation = (pd.date_range(start=self.startdate, end=Goal.tomorrow_date,
+                                                    freq=str(
+                                                        self.period) + 'D')).size  # TODO: I'm pretty sure this could be optimized
+        self.days_for_calculation = pd.date_range(start=self.startdate, end=Goal.tomorrow_plotting_date,
+                                                  freq=str(self.period) + 'D')
 
     def load_df(self):
         """Loads goal dataframe from csv file.
@@ -76,18 +81,6 @@ class Goal:
         self.df.loc[len(self.df)] = [current_datetime, added_value]
         self.save_df()
 
-    def today_for_calculation(self):
-        x_plot = pd.date_range(start=self.startdate, end=Goal.tomorrow_date,
-                               freq=str(self.period) + 'D')
-        return np.arange(x_plot.size)[-1] #TODO: this is absolutely terrible
-
-    def days_for_calculation(self):
-
-        x_plot = pd.date_range(start=self.startdate, end=Goal.tomorrow_plotting_date,
-                               freq=str(self.period) + 'D')
-
-        return x_plot
-
     def plot_cumsum(self, show=True):
         """Plots a neat comparison of your progress, compared to what you wanted
         to accomplish in that area."""
@@ -95,7 +88,7 @@ class Goal:
         y = self.df['count'].cumsum()
         x = self.df['datetime']
 
-        x_plot = self.days_for_calculation()
+        x_plot = self.days_for_calculation
         y_supposed = self.polynomial(np.arange(x_plot.size))
 
         fig, ax = plt.subplots()
@@ -122,9 +115,9 @@ class Goal:
 
     def review_progress(self):
         current_progress = self.df['count'].sum()
-        supposed_progress = self.polynomial(self.today_for_calculation())
+        supposed_progress = self.polynomial(self.today_for_calculation)
         progress_diff = current_progress - supposed_progress
-        periods_to_equalize = ((self.polynomial - current_progress).r - self.today_for_calculation()).max()
+        periods_to_equalize = ((self.polynomial - current_progress).r - self.today_for_calculation).max()
 
         # cur_day = self.days_for_calculation(True)
         # prog_rate = self.polynomial.deriv()(cur_day)
