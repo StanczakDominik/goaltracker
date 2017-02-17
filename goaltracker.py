@@ -1,7 +1,9 @@
 #!/usr/bin/env python
+# coding=utf-8
 """A python implementation of Beeminder style goal tracking"""
 
 import argparse
+import textwrap
 
 from Goal import Goal
 from config import goals
@@ -11,7 +13,9 @@ if debug:
     import matplotlib
 
     matplotlib.use('TkAgg')
+# noinspection PyPep8
 import matplotlib.pyplot as plt
+
 
 def update_goal(goal_name, goal_update_value=1):
     print(f"Added {goal_update_value} to {goal_name}!")
@@ -34,7 +38,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Track goal status and progress. Run without arguments for interactive mode.')
     parser.add_argument("-s", "--show", nargs='?', const='go_all', type=str, help="Progress review mode")
+    parser.add_argument("-rv", "--review_verbose", help="Verbose Text review mode", action="store_true")
     parser.add_argument("-r", "--review", help="Text review mode", action="store_true")
+    parser.add_argument("-rl", "--review_left", help="Text review mode",
+                        action="store_true")  # TODO: this needs a cleanup
     parser.add_argument("-u", "--update", nargs=2, metavar=('name', 'value'), action='append',
                         help='Update an existing goal')
     parser.add_argument("-c", "--checkoff", nargs=1, metavar=('name',), action='append',
@@ -47,9 +54,51 @@ if __name__ == "__main__":
     elif args.checkoff:
         for goal_name in args.checkoff:
             update_goal(*goal_name)
-    elif args.review:
+    elif args.review_verbose:
         for name, goal in goal_dict.items():
-            goal.review_progress()
+            report = goal.review_progress()
+
+            if report.how_much_ahead > 0:
+                print(textwrap.dedent(f"""Awesome! You're {report.how_much_ahead:.1f} units ahead in {goal.shortname}.
+                        You can, if need be, slack off safely for {report.days_to_equalize} days.
+                        Or we could kick it up a notch..."""))  # TODO: difficulty increase option
+            elif report.how_much_ahead == 0:
+                print(f"You're EXACTLY on track in {goal.shortname}. W00t.")
+            else:  # progress_diff < 0:
+                print(textwrap.dedent(f"""
+                    You're {-report.how_much_ahead:.1f} units behind in {goal.shortname}.
+                    You would need to do {-report.how_much_ahead:.1f} units to catch up right now,
+                    which is equivalent to {-report.days_to_equalize} days' work at a current rate of
+                    {report.progress_rate} per {goal.period} days.
+                    Get to it."""))
+
+    elif args.review:
+        separator = " | "
+        print(separator.join(
+            [f"{'HABIT':20}", f"{'AHEAD':6}", f"{'DAYS':6}",
+             f"{'RATE':6}"]))
+
+        for name, goal in goal_dict.items():
+            report = goal.review_progress()
+            table_string = separator.join(
+                [f"{goal.shortname:20}", f"{report.how_much_ahead:6.1f}", f"{report.days_to_equalize:6}",
+                 f"{report.progress_rate:6.1f}"])
+            print(table_string)
+
+    elif args.review_left:
+        separator = " | "
+        print(separator.join(
+            [f"{'HABIT':20}", f"{'BEHIND':6}", f"{'DAYS':6}",
+             f"{'RATE':6}"]))
+
+        for name, goal in goal_dict.items():
+            report = goal.review_progress()
+            if report.days_to_equalize < 0:
+                table_string = separator.join(
+                    [f"{goal.shortname:20}", f"{-report.how_much_ahead:6.1f}", f"{-report.days_to_equalize:6}",
+                     f"{report.progress_rate:6.1f}"])
+                print(table_string)
+
     elif args.show:  # progress display mode
         for goal in goal_dict.values():
             if (len(goal.df) > 0) and ((args.show == 'go_all') or (goal.shortname == args.show)):

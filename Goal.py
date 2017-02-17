@@ -1,7 +1,7 @@
+# coding=utf-8
 import collections
 import datetime
 import os
-import textwrap
 
 import numpy as np
 import pandas as pd
@@ -9,7 +9,9 @@ from matplotlib import pyplot as plt
 
 from config import conf_path
 
-status_review_report = collections.namedtuple("status_review_report", ["is_ahead", "how_much_ahead", "days_safe"])
+status_review_report = collections.namedtuple("status_review_report",
+                                              ["how_much_ahead", "days_to_equalize", "progress_rate"])
+
 
 def polynomial_coefficients(period, additional):
     polynomial_derivatives = np.array([0] + list(additional))
@@ -57,7 +59,8 @@ class Goal:
         self.df = self.load_df()
         self.today_for_calculation = (pd.date_range(start=self.startdate, end=Goal.tomorrow_date,
                                                     freq=str(
-                                                        self.period) + 'D')).size  # TODO: I'm pretty sure this could be optimized
+                                                        self.period) + 'D')).size
+        # TODO: I'm pretty sure above could be optimized
         self.days_for_calculation = pd.date_range(start=self.startdate, end=Goal.tomorrow_plotting_date,
                                                   freq=str(self.period) + 'D')
 
@@ -70,8 +73,7 @@ class Goal:
             loaded = pd.read_csv(self.filepath, parse_dates=['datetime'], index_col=0)
             return loaded
         else:
-            print(f"Data for {self.shortname} not found. Starting a new dataframe.")
-            print(f"Location was {self.filepath}")
+            print(f"Data for {self.shortname} at {self.filepath} not found. Starting a new dataframe.")
             df = pd.DataFrame(columns=['datetime', 'count'], )
             return df
 
@@ -118,24 +120,9 @@ class Goal:
         supposed_progress = self.polynomial(self.today_for_calculation)
         progress_diff = current_progress - supposed_progress
         periods_to_equalize = ((self.polynomial - current_progress).r - self.today_for_calculation).max()
-
-        # cur_day = self.days_for_calculation(True)
-        # prog_rate = self.polynomial.deriv()(cur_day)
-        # print(f"Current rate of progress is {prog_rate} units per {self.period} days.")
-
-        #TODO: move prints to goaltracker
-        if progress_diff > 0:
-            print(textwrap.dedent(f"""Awesome! You're {progress_diff:.1f} units ahead in {self.shortname}.
-                    You can, if need be, slack off safely for {np.floor(periods_to_equalize*self.period).astype(int)} days.
-                    Or we could kick it up a notch..."""))  # TODO: difficulty increase option
-        elif progress_diff == 0:
-            print(f"You're EXACTLY on track in {self.shortname}. W00t.")
-        else:  # progress_diff < 0:
-            print(textwrap.dedent(f"""
-                You're {-progress_diff:.1f} units behind in {self.shortname}.
-                You would need to do {-progress_diff:.1f} units to catch up right now,
-                which is equivalent to {np.floor(-periods_to_equalize*self.period).astype(int)} days' work.
-                Get to it."""))
+        days_to_equalize = np.floor(periods_to_equalize * self.period).astype(int)
+        prog_rate = self.polynomial.deriv()(self.today_for_calculation)
+        return status_review_report(progress_diff, days_to_equalize, prog_rate)
 
     def save_df(self):
         """Saves the dataframe to .csv."""

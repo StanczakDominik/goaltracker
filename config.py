@@ -1,9 +1,10 @@
+# coding=utf-8
 import os
 from collections import namedtuple
 
 goal_info = namedtuple("goal_info", ['shortname', 'description', 'startdate', 'period', 'derivatives'])
 
-with open(os.path.dirname(os.path.realpath(__file__)) + "/config", "r") as f:
+with open(os.path.dirname(os.path.realpath(__file__)) + "/config") as f:
     conf_path = f.readline().rstrip()
     goals = []
     for line in f.readlines():
