@@ -6,6 +6,7 @@ import os
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from scipy.optimize import curve_fit
 
 from config import conf_path
 
@@ -19,6 +20,10 @@ def polynomial_coefficients(period, additional):
     polynomial_denominators[0] = 1
     return polynomial_derivatives / (polynomial_denominators * period ** polynomial_denominators)
 
+
+def fitting_function(x, *factors):
+    expanded_factors = list(factors) + [0]
+    return np.polyval(expanded_factors, x)
 
 class Goal:
     """Class representing a goal you want to pursue.
@@ -85,18 +90,20 @@ class Goal:
 
     def fit_polynomial(self):
         y = self.df['count'].cumsum().values
-        x = (self.df['datetime'] - self.startdate) / datetime.timedelta(days=1)
-        # print(x)
+        x = (self.df['datetime'] - self.startdate) / datetime.timedelta(days=self.period)
 
-        x_fit = self.days_for_calculation
-        # print(x)
-        # print(y)
-
-        coeffs = np.polyfit(x, y, deg=self.polynomial.order)
-        coeffs[-1] = 0
+        limited_coefficients = self.polynomial.c[:-1]
+        # try:
+        coeffs, covs = curve_fit(fitting_function,
+                                 x, y,
+                                 p0=limited_coefficients,
+                                 bounds=(len(limited_coefficients) * [0], len(limited_coefficients) * [np.inf]))
+        coeffs = list(coeffs) + [0]
+        if np.isinf(covs).any():
+            print("Could not fit the polynomial properly. Not doing anything.")
+            return None
         fit_poly = np.poly1d(coeffs, variable='t')
-        print(self.polynomial.c)
-        print(fit_poly.c)
+        # print(self.polynomial.c, " -> ", fit_poly.c)
         return (fit_poly)
 
 
@@ -111,11 +118,12 @@ class Goal:
         y_supposed = self.polynomial(np.arange(x_plot.size))
 
         x_fit = (self.days_for_calculation - self.startdate) / datetime.timedelta(days=1)
-        y_fitted = self.fit_polynomial()(x_fit)
+        y_fitted = self.fit_polynomial()
 
         fig, ax = plt.subplots()
         ax.set_title(self.shortname.upper())
-        ax.plot(x_plot, y_fitted, label="How you seem to be doing!")
+        if y_fitted:
+            ax.plot(x_plot, y_fitted(x_fit), label="How you seem to be doing!")
         ax.plot(x, y, "bo--", label="Your progress!")
         ax.plot(x_plot, y_supposed, "r-", label="How you should be doing!")
         ax.fill_between(x_plot, y_supposed - self.leeway, y_supposed + self.leeway, color="yellow", alpha=0.5)
