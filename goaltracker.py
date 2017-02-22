@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # coding=utf-8
-"""A python implementation of Beeminder style goal tracking"""
+"""A python implementation of Beeminder style goal tracking. File responsible for UI."""
 
 import argparse
+import datetime
 import textwrap
 
 from Goal import Goal
@@ -30,6 +31,22 @@ def create_goal(shortname, description, startdate, period, derivatives):
     with open(conf_path + "/" + shortname + ".csv", "w") as f:
         f.write(descriptor_line)
         f.write("\n,datetime,count")
+
+
+def fit_new_values(goal_name):
+    g = goal_dict[goal_name]
+    fitted_poly = g.fit_polynomial()
+    print("If we were to go by your current going, we'd change the coefficients to:")
+    print(g.polynomial.c[:-1], " -> ", fitted_poly.c[:-1])
+    if input("Type 'x' to accept.") == 'x':
+        create_goal(g.shortname, g.description, datetime.datetime.strftime(g.startdate, "%Y-%m-%d"), str(g.period),
+                    [str(i) for i in fitted_poly.c[:-1]])
+        g.save_df()
+        print(f"All right! Saved changes in {g.shortname}.")
+    else:
+        print("Okay, laters!")
+
+
 
 if __name__ == "__main__":
     goal_dict = {}
@@ -121,12 +138,4 @@ if __name__ == "__main__":
         plt.show()
 
     if args.fit:
-        g = goal_dict[args.fit[0]]
-        fitted_poly = g.fit_polynomial()
-        print("If we were to go by your current going, we'd change the coefficients to:")
-        print(g.polynomial.c[:-1], " -> ", fitted_poly.c[:-1])
-        if input("Type 'x' to accept.") == 'x':
-            print("All right!")
-            # TODO: update saved polynomial
-        else:
-            print("Okay, laters!")
+        fit_new_values(args.fit[0])
