@@ -104,7 +104,7 @@ if __name__ == "__main__":
             [f"{'HABIT':20}", f"{'BEHIND':6}", f"{'DAYS':6}",
              f"{'RATE':6}"]))
 
-        for name, goal in goal_dict.items():
+        for name, goal in goal_dict.items():  # TODO: sort values
             report = goal.review_progress()
             if report.days_to_equalize < 0:
                 table_string = separator.join(

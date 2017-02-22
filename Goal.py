@@ -3,7 +3,6 @@ import collections
 import datetime
 import os
 
-import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -86,15 +85,19 @@ class Goal:
 
     def fit_polynomial(self):
         y = self.df['count'].cumsum().values
-        x = mdates.date2num(self.df['datetime'].astype(datetime.datetime))
+        x = (self.df['datetime'] - self.startdate) / datetime.timedelta(days=1)
+        # print(x)
 
-        x_fit = self.days_for_calculation()
-        print(x)
-        print(y)
+        x_fit = self.days_for_calculation
+        # print(x)
+        # print(y)
+
         coeffs = np.polyfit(x, y, deg=self.polynomial.order)
+        coeffs[-1] = 0
         fit_poly = np.poly1d(coeffs, variable='t')
-        print(fit_poly.c, self.polynomial.c)
-
+        print(self.polynomial.c)
+        print(fit_poly.c)
+        return (fit_poly)
 
 
     def plot_cumsum(self, show=True):
@@ -107,10 +110,12 @@ class Goal:
         x_plot = self.days_for_calculation
         y_supposed = self.polynomial(np.arange(x_plot.size))
 
-        self.fit_polynomial()
+        x_fit = (self.days_for_calculation - self.startdate) / datetime.timedelta(days=1)
+        y_fitted = self.fit_polynomial()(x_fit)
 
         fig, ax = plt.subplots()
         ax.set_title(self.shortname.upper())
+        ax.plot(x_plot, y_fitted, label="How you seem to be doing!")
         ax.plot(x, y, "bo--", label="Your progress!")
         ax.plot(x_plot, y_supposed, "r-", label="How you should be doing!")
         ax.fill_between(x_plot, y_supposed - self.leeway, y_supposed + self.leeway, color="yellow", alpha=0.5)
