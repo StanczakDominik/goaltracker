@@ -103,7 +103,6 @@ class Goal:
             print("Could not fit the polynomial properly. Not doing anything.")
             return None
         fit_poly = np.poly1d(coeffs, variable='t')
-        # print(self.polynomial.c, " -> ", fit_poly.c)
         return (fit_poly)
 
 

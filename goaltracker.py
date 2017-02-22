@@ -53,6 +53,7 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--checkoff", nargs=1, metavar=('name',), action='append',
                         help='Update an existing goal by 1.')
     parser.add_argument("--create", nargs='*', help='Create a goal.')
+    parser.add_argument("-f", "--fit", nargs=1, metavar=('name',), help="See how you're doing in a particular goal.")
     args = parser.parse_args()
 
     if args.update:  # command line update mode
@@ -118,3 +119,14 @@ if __name__ == "__main__":
                 goal.review_progress()
                 goal.plot_cumsum(show=False)
         plt.show()
+
+    if args.fit:
+        g = goal_dict[args.fit[0]]
+        fitted_poly = g.fit_polynomial()
+        print("If we were to go by your current going, we'd change the coefficients to:")
+        print(g.polynomial.c[:-1], " -> ", fitted_poly.c[:-1])
+        if input("Type 'x' to accept.") == 'x':
+            print("All right!")
+            # TODO: update saved polynomial
+        else:
+            print("Okay, laters!")
