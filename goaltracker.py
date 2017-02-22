@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
         for name, goal in goal_dict.items():  # TODO: sort values
             report = goal.review_progress()
-            if report.days_to_equalize < 0:
+            if report.days_to_equalize < 1:
                 table_string = separator.join(
                     [f"{goal.shortname:20}", f"{-report.how_much_ahead:6.1f}", f"{-report.days_to_equalize:6}",
                      f"{report.progress_rate:6.1f}"])
