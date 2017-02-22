@@ -5,16 +5,15 @@
 import argparse
 import textwrap
 
-debug = True
+from Goal import Goal
+from config import goals, conf_path
+
+debug = False
 if debug:
     import matplotlib
 
     matplotlib.use('TkAgg')
 # noinspection PyPep8
-from Goal import Goal
-from config import goals
-
-
 import matplotlib.pyplot as plt
 
 
@@ -25,6 +24,12 @@ def update_goal(goal_name, goal_update_value=1):
     if args.show:
         goal_dict[goal_name].plot_cumsum()
 
+
+def create_goal(shortname, description, startdate, period, derivatives):
+    descriptor_line = ";".join([shortname, description, startdate, period, *derivatives])
+    with open(conf_path + "/" + shortname + ".csv", "w") as f:
+        f.write(descriptor_line)
+        f.write("\n,datetime,count")
 
 if __name__ == "__main__":
     goal_dict = {}
@@ -47,15 +52,22 @@ if __name__ == "__main__":
                         help='Update an existing goal')
     parser.add_argument("-c", "--checkoff", nargs=1, metavar=('name',), action='append',
                         help='Update an existing goal by 1.')
+    parser.add_argument("--create", nargs='*', help='Create a goal.')
     args = parser.parse_args()
 
     if args.update:  # command line update mode
         for goal_name, goal_update_value in args.update:
             update_goal(goal_name, goal_update_value)
-    elif args.checkoff:
+    if args.create:
+        shortname, description, startdate, period, *derivatives = args.create
+        derivatives = [str(int(i)) for i in derivatives]
+        print(derivatives)
+        create_goal(shortname, description, startdate, period, derivatives)
+
+    if args.checkoff:
         for goal_name in args.checkoff:
             update_goal(*goal_name)
-    elif args.review_verbose:
+    if args.review_verbose:
         for name, goal in goal_dict.items():
             report = goal.review_progress()
 
@@ -73,7 +85,7 @@ if __name__ == "__main__":
                     {report.progress_rate} per {goal.period} days.
                     Get to it."""))
 
-    elif args.review:
+    if args.review:
         separator = " | "
         print(separator.join(
             [f"{'HABIT':20}", f"{'AHEAD':6}", f"{'DAYS':6}",
@@ -86,7 +98,7 @@ if __name__ == "__main__":
                  f"{report.progress_rate:6.1f}"])
             print(table_string)
 
-    elif args.review_left:
+    if args.review_left:
         separator = " | "
         print(separator.join(
             [f"{'HABIT':20}", f"{'BEHIND':6}", f"{'DAYS':6}",
@@ -100,7 +112,7 @@ if __name__ == "__main__":
                      f"{report.progress_rate:6.1f}"])
                 print(table_string)
 
-    elif args.show:  # progress display mode
+    if args.show:  # progress display mode
         for goal in goal_dict.values():
             if (len(goal.df) > 0) and ((args.show == 'go_all') or (goal.shortname == args.show)):
                 goal.review_progress()
