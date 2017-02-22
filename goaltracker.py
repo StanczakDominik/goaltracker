@@ -6,7 +6,7 @@ import argparse
 import textwrap
 
 from Goal import Goal
-from config import goals
+from config import goals, conf_path
 
 debug = False
 if debug:
@@ -24,6 +24,12 @@ def update_goal(goal_name, goal_update_value=1):
     if args.show:
         goal_dict[goal_name].plot_cumsum()
 
+
+def create_goal(shortname, description, startdate, period, derivatives):
+    descriptor_line = ";".join([shortname, description, startdate, period, *derivatives])
+    with open(conf_path + "/" + shortname + ".csv", "w") as f:
+        f.write(descriptor_line)
+        f.write("\n,datetime,count")
 
 if __name__ == "__main__":
     goal_dict = {}
@@ -46,11 +52,18 @@ if __name__ == "__main__":
                         help='Update an existing goal')
     parser.add_argument("-c", "--checkoff", nargs=1, metavar=('name',), action='append',
                         help='Update an existing goal by 1.')
+    parser.add_argument("--create", nargs='*', help='Create a goal.')
     args = parser.parse_args()
 
     if args.update:  # command line update mode
         for goal_name, goal_update_value in args.update:
             update_goal(goal_name, goal_update_value)
+    if args.create:
+        shortname, description, startdate, period, *derivatives = args.create
+        derivatives = [str(int(i)) for i in derivatives]
+        print(derivatives)
+        create_goal(shortname, description, startdate, period, derivatives)
+
     if args.checkoff:
         for goal_name in args.checkoff:
             update_goal(*goal_name)

@@ -70,7 +70,7 @@ class Goal:
 
         if os.path.isfile(self.filepath):
             # print("Found {}!".format(self.filepath))
-            loaded = pd.read_csv(self.filepath, parse_dates=['datetime'], index_col=0)
+            loaded = pd.read_csv(self.filepath, parse_dates=['datetime'], index_col=0, header=1)
             return loaded
         else:
             print(f"Data for {self.shortname} at {self.filepath} not found. Starting a new dataframe.")
@@ -126,4 +126,8 @@ class Goal:
 
     def save_df(self):
         """Saves the dataframe to .csv."""
-        self.df.to_csv(self.filepath)
+        with open(self.filepath, "r") as f:
+            line = f.readline()
+        with open(self.filepath, "w") as f:
+            f.write(line)
+            self.df.to_csv(f)
