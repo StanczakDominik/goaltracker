@@ -1,4 +1,5 @@
 # coding=utf-8
+"""finds goal files"""
 import os
 from collections import namedtuple
 

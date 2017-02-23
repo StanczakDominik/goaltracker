@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 def list_last_entries(goal_name):
     print(goal_dict[goal_name].df.tail())
 
+
 def update_goal(goal_name, goal_update_value=1):
     print(f"Added {goal_update_value} to {goal_name}!")
     goal_dict[goal_name].progress(float(goal_update_value))
@@ -48,7 +49,6 @@ def fit_new_values(goal_name):
         print(f"All right! Saved changes in {g.shortname}.")
     else:
         print("Okay, laters!")
-
 
 
 if __name__ == "__main__":

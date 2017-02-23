@@ -1,3 +1,4 @@
+"""goal tracking CLI app"""
 # coding=utf-8
 import collections
 import datetime
@@ -14,7 +15,7 @@ status_review_report = collections.namedtuple("status_review_report",
                                               ["how_much_ahead", "days_to_equalize", "progress_rate"])
 
 
-def polynomial_coefficients(period, additional):
+def calculate_coefficients(period, additional):
     polynomial_derivatives = np.array([0] + list(additional))
     polynomial_denominators = np.arange(polynomial_derivatives.size)
     polynomial_denominators[0] = 1
@@ -24,6 +25,7 @@ def polynomial_coefficients(period, additional):
 def fitting_function(x, *factors):
     expanded_factors = list(factors) + [0]
     return np.polyval(expanded_factors, x)
+
 
 class Goal:
     """Class representing a goal you want to pursue.
@@ -56,8 +58,8 @@ class Goal:
         self.period = period
         self.count = derivatives[0]
         self.leeway = 3 * self.count / self.period
-        self.polynomial_coefficients = polynomial_coefficients(self.period, derivatives)
-        self.polynomial = np.poly1d(self.polynomial_coefficients[::-1], variable="t")
+        polynomial_coefficients = calculate_coefficients(self.period, derivatives)
+        self.polynomial = np.poly1d(polynomial_coefficients[::-1], variable="t")
         self.factors = np.array(derivatives)
         self.filepath = conf_path + self.shortname + ".csv"
         # TODO: make sure file path exists
@@ -104,7 +106,7 @@ class Goal:
             print("Could not fit the polynomial properly. Not doing anything.")
             return None
         fit_poly = np.poly1d(coeffs, variable='t')
-        return (fit_poly)
+        return fit_poly
 
     def plot_cumsum(self, show=True):
         """Plots a neat comparison of your progress, compared to what you wanted
@@ -154,7 +156,7 @@ class Goal:
 
     def save_df(self):
         """Saves the dataframe to .csv."""
-        with open(self.filepath, "r") as f:
+        with open(self.filepath) as f:
             line = f.readline()
         with open(self.filepath, "w") as f:
             f.write(line)
