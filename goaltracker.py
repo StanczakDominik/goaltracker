@@ -18,6 +18,9 @@ if debug:
 import matplotlib.pyplot as plt
 
 
+def list_last_entries(goal_name):
+    print(goal_dict[goal_name].df.tail())
+
 def update_goal(goal_name, goal_update_value=1):
     print(f"Added {goal_update_value} to {goal_name}!")
     goal_dict[goal_name].progress(float(goal_update_value))
@@ -71,6 +74,7 @@ if __name__ == "__main__":
                         help='Update an existing goal by 1.')
     parser.add_argument("--create", nargs='*', help='Create a goal.')
     parser.add_argument("-f", "--fit", nargs=1, metavar=('name',), help="See how you're doing in a particular goal.")
+    parser.add_argument("-t", "--tail", nargs=1, metavar=('name',), help="Review last entries.")
     args = parser.parse_args()
 
     if args.update:  # command line update mode
@@ -103,6 +107,9 @@ if __name__ == "__main__":
                     which is equivalent to {-report.days_to_equalize} days' work at a current rate of
                     {report.progress_rate} per {goal.period} days.
                     Get to it."""))
+
+    if args.tail:
+        list_last_entries(args.tail[0])
 
     if args.review:
         separator = " | "

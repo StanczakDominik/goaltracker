@@ -106,7 +106,6 @@ class Goal:
         fit_poly = np.poly1d(coeffs, variable='t')
         return (fit_poly)
 
-
     def plot_cumsum(self, show=True):
         """Plots a neat comparison of your progress, compared to what you wanted
         to accomplish in that area."""
