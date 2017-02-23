@@ -114,29 +114,53 @@ if __name__ == "__main__":
     if args.review:
         separator = " | "
         print(separator.join(
-            [f"{'HABIT':20}", f"{'AHEAD':6}", f"{'DAYS':6}",
-             f"{'RATE':6}"]))
+            [f"{'HABIT':20}",
+             f"{'AHEAD':6}",
+             f"{'DAYS':6}",
+             f"{'RATE':6}",
+             f"{'LAST':8}"]))
 
         for name, goal in goal_dict.items():
             report = goal.review_progress()
-            table_string = separator.join(
-                [f"{goal.shortname:20}", f"{report.how_much_ahead:6.1f}", f"{report.days_to_equalize:6}",
-                 f"{report.progress_rate:6.1f}"])
-            print(table_string)
+            try:
+                days_since_last = -(goal.df['datetime'].iloc[-1] - datetime.datetime.today()) / datetime.timedelta(
+                    days=1)
+                table_string = separator.join(
+                    [f"{goal.shortname:20}",
+                     f"{report.how_much_ahead:6.1f}",
+                     f"{report.days_to_equalize:6}",
+                     f"{report.progress_rate:6.1f}",
+                     f"{days_since_last:.0f}"
+                     ])
+                print(table_string)
+            except IndexError:
+                print(f"table lookup failed for {goal.shortname}")
 
     if args.review_left:
         separator = " | "
         print(separator.join(
-            [f"{'HABIT':20}", f"{'BEHIND':6}", f"{'DAYS':6}",
-             f"{'RATE':6}"]))
+            [f"{'HABIT':20}",
+             f"{'BEHIND':6}",
+             f"{'DAYS':6}",
+             f"{'RATE':6}",
+             f"{'LAST':8}",
+             ]))
 
         for name, goal in goal_dict.items():  # TODO: sort values
             report = goal.review_progress()
-            if report.days_to_equalize < 1:
-                table_string = separator.join(
-                    [f"{goal.shortname:20}", f"{-report.how_much_ahead:6.1f}", f"{-report.days_to_equalize:6}",
-                     f"{report.progress_rate:6.1f}"])
-                print(table_string)
+            try:
+                days_since_last = -(goal.df['datetime'].iloc[-1] - datetime.datetime.today()) / datetime.timedelta(
+                    days=1)
+                if report.days_to_equalize < 0:
+                    table_string = separator.join(
+                        [f"{goal.shortname:20}",
+                         f"{-report.how_much_ahead:6.1f}",
+                         f"{-report.days_to_equalize:6}",
+                         f"{report.progress_rate:6.1f}",
+                         f"{days_since_last:.0f}"])
+                    print(table_string)
+            except IndexError:
+                print(f"table lookup failed for {goal.shortname}")
 
     if args.show:  # progress display mode
         for goal in goal_dict.values():
