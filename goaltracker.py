@@ -151,7 +151,7 @@ if __name__ == "__main__":
             try:
                 days_since_last = -(goal.df['datetime'].iloc[-1] - datetime.datetime.today()) / datetime.timedelta(
                     days=1)
-                if report.days_to_equalize < 0:
+                if report.days_to_equalize < 0 or days_since_last >= 1:
                     table_string = separator.join(
                         [f"{goal.shortname:20}",
                          f"{-report.how_much_ahead:6.1f}",
