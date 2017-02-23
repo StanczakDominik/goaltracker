@@ -79,7 +79,7 @@ if __name__ == "__main__":
     if args.create:
         shortname, description, period, *derivatives = args.create
         derivatives = [str(int(i)) for i in derivatives]
-        startdate = datetime.datetime.strptime(datetime.datetime.time(), "%Y-%m-%d")
+        startdate = datetime.datetime.strftime(datetime.datetime.today(), "%Y-%m-%d")
         print(derivatives)
         create_goal(shortname, description, startdate, period, derivatives)
 

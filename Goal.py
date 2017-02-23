@@ -91,6 +91,7 @@ class Goal:
     def fit_polynomial(self):
         y = self.df['count'].cumsum().values
         x = (self.df['datetime'] - self.startdate) / datetime.timedelta(days=self.period)
+        # print(x.size, self.days_for_calculation.size)
 
         limited_coefficients = self.polynomial.c[:-1]
         # try:
