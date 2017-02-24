@@ -4,7 +4,6 @@
 
 import argparse
 import datetime
-import textwrap
 
 from Goal import Goal
 from config import goals, conf_path
@@ -51,6 +50,33 @@ def fit_new_values(goal_name):
         print("Okay, laters!")
 
 
+def review(full=False):
+    separator = " | "
+    print(separator.join(
+        [f"{'HABIT':20}",
+         f"{'AHEAD':6}",
+         f"{'DAYS':6}",
+         f"{'RATE':6}",
+         f"{'LAST':8}"]))
+
+    for name, goal in goal_dict.items():
+        report = goal.review_progress()
+        try:
+            days_since_last = -(goal.df['datetime'].iloc[-1] - datetime.datetime.today()) / datetime.timedelta(
+                days=1) / goal.period
+            if full or (report.days_to_equalize < 0 or days_since_last >= 1):
+                table_string = separator.join(
+                    [f"{goal.shortname:20}",
+                     f"{report.how_much_ahead:6.1f}",
+                     f"{report.days_to_equalize:6}",
+                     f"{report.progress_rate:6.1f}",
+                     f"{days_since_last:.0f}"
+                     ])
+                print(table_string)
+        except IndexError:
+            print(f"table lookup failed for {goal.shortname}")
+
+
 if __name__ == "__main__":
     goal_dict = {}
     # load from config
@@ -63,22 +89,40 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description='Track goal status and progress. Run without arguments for interactive mode.')
-    parser.add_argument("-s", "--show", nargs='?', const='go_all', type=str, help="Progress review mode")
-    parser.add_argument("-r", "--review", help="Text review mode", action="store_true")
-    parser.add_argument("-rl", "--review_left", help="Text review mode",
-                        action="store_true")  # TODO: this needs a cleanup
-    parser.add_argument("-u", "--update", nargs=2, metavar=('name', 'value'), action='append',
+    parser.add_argument("-s", "--show",
+                        nargs='?', metavar=('name',),
+                        const='go_all', type=str,
+                        help="Progress review mode")
+    parser.add_argument("-r", "--review",
+                        help="Text review mode",
+                        action="store_true")
+    parser.add_argument("-rl", "--review_left",
+                        action="store_true",
+                        help="Text review mode")
+    parser.add_argument("-u", "--update",
+                        nargs=2, metavar=('name', 'value'),
+                        action='append',
                         help='Update an existing goal')
-    parser.add_argument("-c", "--checkoff", nargs=1, metavar=('name',), action='append',
+    parser.add_argument("-c", "--checkoff",
+                        nargs=1, metavar=('name',),
+                        action='append',
                         help='Update an existing goal by 1.')
-    parser.add_argument("--create", nargs='*', help='Create a goal.')
-    parser.add_argument("-f", "--fit", nargs=1, metavar=('name',), help="See how you're doing in a particular goal.")
-    parser.add_argument("-t", "--tail", nargs=1, metavar=('name',), help="Review last entries.")
+    parser.add_argument("--create",
+                        nargs='*',
+                        metavar=('name', 'period and derivatives'),
+                        help='Create a goal.')
+    parser.add_argument("-f", "--fit",
+                        nargs=1, metavar=('name',),
+                        help="See how you're doing in a particular goal.")
+    parser.add_argument("-t", "--tail",
+                        nargs=1, metavar=('name',),
+                        help="Review last entries.")
     args = parser.parse_args()
 
     if args.update:  # command line update mode
         for goal_name, goal_update_value in args.update:
             update_goal(goal_name, goal_update_value)
+        review()
     if args.create:
         shortname, description, period, *derivatives = args.create
         derivatives = [str(int(i)) for i in derivatives]
@@ -89,62 +133,18 @@ if __name__ == "__main__":
     if args.checkoff:
         for goal_name in args.checkoff:
             update_goal(*goal_name)
+        review()
 
     if args.tail:
         list_last_entries(args.tail[0])
 
     if args.review:
-        separator = " | "
-        print(separator.join(
-            [f"{'HABIT':20}",
-             f"{'AHEAD':6}",
-             f"{'DAYS':6}",
-             f"{'RATE':6}",
-             f"{'LAST':8}"]))
-
-        for name, goal in goal_dict.items():
-            report = goal.review_progress()
-            try:
-                days_since_last = -(goal.df['datetime'].iloc[-1] - datetime.datetime.today()) / datetime.timedelta(
-                    days=1)
-                table_string = separator.join(
-                    [f"{goal.shortname:20}",
-                     f"{report.how_much_ahead:6.1f}",
-                     f"{report.days_to_equalize:6}",
-                     f"{report.progress_rate:6.1f}",
-                     f"{days_since_last:.0f}"
-                     ])
-                print(table_string)
-            except IndexError:
-                print(f"table lookup failed for {goal.shortname}")
+        review(full=True)
 
     if args.review_left:
-        separator = " | "
-        print(separator.join(
-            [f"{'HABIT':20}",
-             f"{'BEHIND':6}",
-             f"{'DAYS':6}",
-             f"{'RATE':6}",
-             f"{'LAST':8}",
-             ]))
+        review()
 
-        for name, goal in goal_dict.items():  # TODO: sort values
-            report = goal.review_progress()
-            try:
-                days_since_last = -(goal.df['datetime'].iloc[-1] - datetime.datetime.today()) / datetime.timedelta(
-                    days=1) / goal.period
-                if report.days_to_equalize < 0 or days_since_last >= 1:
-                    table_string = separator.join(
-                        [f"{goal.shortname:20}",
-                         f"{-report.how_much_ahead:6.1f}",
-                         f"{-report.days_to_equalize:6}",
-                         f"{report.progress_rate:6.1f}",
-                         f"{days_since_last:.0f}"])
-                    print(table_string)
-            except IndexError:
-                print(f"table lookup failed for {goal.shortname}")
-
-    if args.show:  # progress display mode
+    if args.show:
         for goal in goal_dict.values():
             if (len(goal.df) > 0) and ((args.show == 'go_all') or (goal.shortname == args.show)):
                 goal.review_progress()
