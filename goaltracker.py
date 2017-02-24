@@ -64,7 +64,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Track goal status and progress. Run without arguments for interactive mode.')
     parser.add_argument("-s", "--show", nargs='?', const='go_all', type=str, help="Progress review mode")
-    parser.add_argument("-rv", "--review_verbose", help="Verbose Text review mode", action="store_true")
     parser.add_argument("-r", "--review", help="Text review mode", action="store_true")
     parser.add_argument("-rl", "--review_left", help="Text review mode",
                         action="store_true")  # TODO: this needs a cleanup
@@ -90,23 +89,6 @@ if __name__ == "__main__":
     if args.checkoff:
         for goal_name in args.checkoff:
             update_goal(*goal_name)
-    if args.review_verbose:
-        for name, goal in goal_dict.items():
-            report = goal.review_progress()
-
-            if report.how_much_ahead > 0:
-                print(textwrap.dedent(f"""Awesome! You're {report.how_much_ahead:.1f} units ahead in {goal.shortname}.
-                        You can, if need be, slack off safely for {report.days_to_equalize} days.
-                        Or we could kick it up a notch..."""))  # TODO: difficulty increase option
-            elif report.how_much_ahead == 0:
-                print(f"You're EXACTLY on track in {goal.shortname}. W00t.")
-            else:  # progress_diff < 0:
-                print(textwrap.dedent(f"""
-                    You're {-report.how_much_ahead:.1f} units behind in {goal.shortname}.
-                    You would need to do {-report.how_much_ahead:.1f} units to catch up right now,
-                    which is equivalent to {-report.days_to_equalize} days' work at a current rate of
-                    {report.progress_rate} per {goal.period} days.
-                    Get to it."""))
 
     if args.tail:
         list_last_entries(args.tail[0])
@@ -150,7 +132,7 @@ if __name__ == "__main__":
             report = goal.review_progress()
             try:
                 days_since_last = -(goal.df['datetime'].iloc[-1] - datetime.datetime.today()) / datetime.timedelta(
-                    days=1)
+                    days=1) / goal.period
                 if report.days_to_equalize < 0 or days_since_last >= 1:
                     table_string = separator.join(
                         [f"{goal.shortname:20}",
