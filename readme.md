@@ -4,6 +4,10 @@ and generate pretty plots while you're at it. Shoutout to Beeminder for creating
 
 Mostly based on the data science Python ecosystem, written with Pandas practice in mind.
 
+### Current status
+
+This project is mostly abandoned now. I've learned what I wanted, including that the folks at Beeminder are true badasses.
+
 ## Usage
 1. Put the directory where you want to store your data in `config` (see `config.sample`).
 2. Use `goaltracker.py --create` to create your next goal to track. The arguments for that are
